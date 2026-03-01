@@ -1,0 +1,50 @@
+pipeline {
+    agent any
+
+    stages {
+
+        stage('Get Code') {
+            steps {
+                git branch: 'main', url: 'https://github.com/Minibomba2/todo-list-aws-arb.git'
+                sh '''
+                  rm -rf _config
+                  git clone --depth 1 --branch production git@github.com:Minibomba2/todo-list-aws-config.git _config
+                '''                
+                stash name: 'src', includes: '**/*'
+            }
+        }
+
+        stage('Deploy') {
+        steps {
+            unstash 'src'
+            sh '''
+            sam build
+            sam validate
+            sam deploy --config-env production --config-file samconfig.toml \
+                --resolve-s3 \
+                --no-confirm-changeset --no-fail-on-empty-changeset
+            '''
+        }
+        }
+
+        stage('Rest Test') {
+            steps {
+                unstash 'src'
+                sh '''
+                set -e
+                API_URL=$(aws cloudformation describe-stacks \
+                    --stack-name "todo-list-aws-production" \
+                    --region "us-east-1" \
+                    --query "Stacks[0].Outputs[?OutputKey=='BaseUrlApi'].OutputValue" \
+                    --output text)
+
+                echo "API_URL=$API_URL"
+                test -n "$API_URL"
+                export BASE_URL="$API_URL"
+
+                pytest -q test/integration/todoApiTest.py -k "listtodos or gettodo"
+                '''
+            }
+        }
+    }
+}v
