@@ -12,6 +12,11 @@ pipeline {
         '''
         
         git branch: 'develop', url: 'https://github.com/Minibomba2/todo-list-aws-arb'
+
+        sh '''
+          rm -rf _config        
+          git clone --depth 1 --branch staging git@github.com:Minibomba2/todo-list-aws-config.git _config
+        '''        
         stash name: 'src', includes: '**/*'
       }
     }
@@ -52,7 +57,7 @@ pipeline {
         sh '''
           sam build
           sam validate
-          sam deploy --config-env staging --config-file samconfig.toml \
+          sam deploy --config-env staging --config-file _config/samconfig.toml \
             --resolve-s3 \
             --no-confirm-changeset --no-fail-on-empty-changeset
         '''
