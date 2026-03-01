@@ -11,6 +11,10 @@ pipeline {
                   echo "WORKSPACE=$WORKSPACE"
                 '''                
                 git branch: 'main', url: 'https://github.com/Minibomba2/todo-list-aws-arb.git'
+                sh '''
+                  rm -rf _config
+                  git clone --depth 1 --branch production git@github.com:Minibomba2/todo-list-aws-config.git _config
+                '''                
                 stash name: 'src', includes: '**/*'
             }
         }
@@ -26,7 +30,7 @@ pipeline {
             sh '''
             sam build
             sam validate
-            sam deploy --config-env production --config-file samconfig.toml \
+            sam deploy --config-env production --config-file _config/samconfig.toml \
                 --resolve-s3 \
                 --no-confirm-changeset --no-fail-on-empty-changeset
             '''
