@@ -20,7 +20,7 @@ pipeline {
             sh '''
             sam build
             sam validate
-            sam deploy --config-env production --config-file samconfig.toml \
+            sam deploy --config-env production --config-file _config/samconfig.toml \
                 --resolve-s3 \
                 --no-confirm-changeset --no-fail-on-empty-changeset
             '''
@@ -47,4 +47,4 @@ pipeline {
             }
         }
     }
-}v
+}
